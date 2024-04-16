@@ -7,15 +7,15 @@ Created on Sat Apr  6 02:23:11 2024
 # builtin import
 import os
 os.makedirs("journal", exist_ok=True)
+import sys
+import re
 import enum
 import datetime as dt
 import pickle
+import base64
 from cryptography.fernet import Fernet
 from cryptography.fernet import InvalidToken
 from cryptography.exceptions import InvalidSignature
-
-key = b"replace the key here"
-
 
 def clear_console() -> None:
     os.system("cls" if os.name in ("nt", "dos") else "clear")
@@ -69,10 +69,31 @@ class SecureJournalEntry:
             f.write(self.encrypt())
 
     def __str__(self):
+
         return f"{self.date}\n\n{self.mood}\n\n{self.desc}"
 
 
-def ui() -> None:
+def app(args: list) -> None:
+    
+    if len(args) == 0:
+        print("[Unencrypted Journal]")
+    elif len(args) == 1:
+        if args[0] == "-h":
+            print("[Jornl Help]")
+            print("New Jornl: python main.py key")
+            print("Load Existing Jornl: python main.py date(01_01_2020) key")
+        else:
+            print("[Encrypted Journal]")
+            key = args[0].encode('utf-8')
+    elif len(args) == 2:
+        print("=" * 32)
+        print(SecureJournalEntry.load(args[0], args[1]))
+        print("=" * 32)
+        return None
+    else:
+        print("Invalid number of arguments.")
+        return None
+    input("Press a button to continue / Ctrl+C to exit.")
     # Date    
     while True:
         clear_console()
@@ -129,8 +150,7 @@ def ui() -> None:
             entry = SecureJournalEntry(date, mood, desc, key)
             entry.save()
             print(SecureJournalEntry.load(entry.date, key))
-            # print(SecureJournalEntry.load("05_03_2022", key))
-            # print(SecureJournalEntry.load("06_04_2024", key))
+            print(SecureJournalEntry.load("06_04_2024", key))
             print("Entry Created.")
             break
         else:
@@ -140,4 +160,4 @@ def ui() -> None:
             print("[Description] -", desc)
             print("Invalid Entry, try (Y/N)")
 
-ui()
+app(sys.argv[1:]) # ignoring the first system arg ''
